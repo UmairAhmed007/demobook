@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — DemoBook</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --panel2:#1c2128; --border:#30363d;
+    --text:#e6edf3; --muted:#8b949e; --accent:#58a6ff; --green:#7ee787;
+    --yellow:#ffd33d; --red:#ff7b72; --purple:#d2a8ff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg); color:var(--text); min-height:100vh;
+    font-size:14px; line-height:1.5;
+  }
+  .container{max-width:1300px;margin:0 auto;padding:24px}
+
+  /* Login */
+  .login-wrap{
+    min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .login-card{
+    background:var(--panel); border:1px solid var(--border); border-radius:12px;
+    padding:32px; width:100%; max-width:380px; text-align:center;
+  }
+  .login-card h1{ color:var(--accent); font-size:22px; margin-bottom:8px; }
+  .login-card p{ color:var(--muted); font-size:13px; margin-bottom:22px; }
+  .login-card input{
+    width:100%; padding:12px 14px; font-size:14px; background:var(--bg); color:var(--text);
+    border:1px solid var(--border); border-radius:8px; outline:none; margin-bottom:12px;
+  }
+  .login-card input:focus{ border-color:var(--accent); box-shadow:0 0 0 3px rgba(88,166,255,.15); }
+  .login-card button{
+    width:100%; padding:12px; font-size:14px; font-weight:600; cursor:pointer;
+    background:var(--accent); color:#000; border:none; border-radius:8px;
+  }
+  .login-card button:hover{ background:#79b8ff; }
+  .login-error{ color:var(--red); font-size:13px; margin-bottom:12px; min-height:18px; }
+
+  /* Header */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:16px; margin-bottom:24px; flex-wrap:wrap;
+    padding-bottom:16px; border-bottom:1px solid var(--border);
+  }
+  .topbar h1{ font-size:24px; color:var(--accent); }
+  .topbar h1 span{ color:var(--muted); font-size:14px; font-weight:400; margin-left:8px; }
+  .topbar-actions{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .btn{
+    background:var(--panel); color:var(--text); border:1px solid var(--border);
+    padding:8px 14px; font-size:13px; border-radius:8px; cursor:pointer;
+    text-decoration:none; display:inline-flex; align-items:center; gap:6px;
+  }
+  .btn:hover{ background:var(--panel2); border-color:var(--accent); }
+  .btn.primary{ background:var(--accent); color:#000; border-color:var(--accent); font-weight:600; }
+  .btn.primary:hover{ background:#79b8ff; }
+  .btn.danger{ color:var(--red); }
+  .btn.danger:hover{ background:rgba(255,123,114,.1); border-color:var(--red); }
+  .live-dot{
+    display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--green);
+    margin-right:6px; animation:pulse 2s infinite;
+  }
+  @keyframes pulse{ 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  /* Warning */
+  .warn{
+    background:#3d1e00; border:1px solid #9e6a03; color:var(--yellow);
+    padding:12px 16px; border-radius:8px; margin-bottom:24px; font-size:13px;
+  }
+
+  /* Stats cards */
+  .cards{
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr));
+    gap:12px; margin-bottom:28px;
+  }
+  .card{
+    background:var(--panel); border:1px solid var(--border); border-radius:10px;
+    padding:18px 16px; text-align:center;
+  }
+  .card .num{ font-size:28px; font-weight:700; color:var(--accent); line-height:1.1; }
+  .card .lbl{
+    font-size:11px; color:var(--muted); text-transform:uppercase;
+    letter-spacing:.5px; margin-top:6px; font-weight:600;
+  }
+  .card.green .num{ color:var(--green); }
+  .card.purple .num{ color:var(--purple); }
+  .card.yellow .num{ color:var(--yellow); }
+
+  /* Tabs */
+  .tabs{
+    display:flex; gap:4px; border-bottom:1px solid var(--border); margin-bottom:20px;
+    overflow-x:auto;
+  }
+  .tab{
+    background:none; border:none; color:var(--muted); font-size:14px; font-weight:600;
+    padding:10px 18px; cursor:pointer; border-bottom:2px solid transparent;
+    white-space:nowrap; font-family:inherit;
+  }
+  .tab:hover{ color:var(--text); }
+  .tab.active{ color:var(--accent); border-bottom-color:var(--accent); }
+  .tab .count{
+    background:var(--panel2); color:var(--muted); font-size:11px; font-weight:700;
+    border-radius:10px; padding:1px 7px; margin-left:6px;
+  }
+  .tab.active .count{ background:rgba(88,166,255,.2); color:var(--accent); }
+
+  /* Search */
+  .search-row{ margin-bottom:16px; }
+  .search-row input{
+    width:100%; max-width:420px; padding:10px 14px; font-size:14px;
+    background:var(--panel); color:var(--text); border:1px solid var(--border);
+    border-radius:8px; outline:none;
+  }
+  .search-row input:focus{ border-color:var(--accent); }
+
+  /* Table */
+  .table-wrap{
+    background:var(--panel); border:1px solid var(--border); border-radius:10px;
+    overflow:hidden;
+  }
+  table{ width:100%; border-collapse:collapse; font-size:13px; }
+  th{
+    background:var(--panel2); color:var(--muted); font-weight:600;
+    text-transform:uppercase; font-size:11px; letter-spacing:.5px;
+    padding:10px 14px; text-align:left; border-bottom:1px solid var(--border);
+    white-space:nowrap;
+  }
+  td{
+    padding:12px 14px; border-bottom:1px solid var(--border); vertical-align:top;
+    word-break:break-word;
+  }
+  tr:last-child td{ border-bottom:none; }
+  tr:hover td{ background:var(--panel2); }
+  .avatar-cell{ display:flex; align-items:center; gap:10px; }
+  .avatar{
+    width:30px; height:30px; border-radius:50%; display:flex;
+    align-items:center; justify-content:center; color:white;
+    font-weight:700; font-size:13px; flex-shrink:0;
+  }
+  code{
+    background:var(--bg); padding:2px 6px; border-radius:4px;
+    font-size:12px; color:var(--green); font-family:ui-monospace,monospace;
+  }
+  .muted{ color:var(--muted); }
+  .pill{
+    display:inline-block; padding:2px 8px; border-radius:10px;
+    font-size:11px; font-weight:700; letter-spacing:.3px;
+  }
+  .pill.green{ background:rgba(126,231,135,.15); color:var(--green); }
+  .pill.muted{ background:var(--panel2); color:var(--muted); }
+  .pill.blue{ background:rgba(88,166,255,.15); color:var(--accent); }
+
+  /* Empty state */
+  .empty{ padding:60px 20px; text-align:center; color:var(--muted); font-style:italic; }
+
+  /* Toast */
+  #toast{
+    position:fixed; bottom:24px; right:24px; background:var(--panel);
+    border:1px solid var(--border); padding:12px 18px; border-radius:8px;
+    font-size:13px; color:var(--text); box-shadow:0 8px 24px rgba(0,0,0,.5);
+    opacity:0; transform:translateY(10px); transition:.25s; pointer-events:none;
+    z-index:1000;
+  }
+  #toast.show{ opacity:1; transform:none; }
+  #toast.err{ border-color:var(--red); color:var(--red); }
+  #toast.ok{ border-color:var(--green); color:var(--green); }
+
+  /* Footer */
+  .footer{
+    margin-top:32px; padding-top:20px; border-top:1px solid var(--border);
+    font-size:12px; color:var(--muted); text-align:center;
+  }
+
+  @media (max-width:700px){
+    th, td{ padding:10px 8px; font-size:12px; }
+    .topbar h1{ font-size:20px; }
+    .card .num{ font-size:22px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN VIEW -->
+<div id="login-view" class="login-wrap">
+  <div class="login-card">
+    <h1>🔐 DemoBook Admin</h1>
+    <p>Enter your admin password to continue</p>
+    <div id="login-error" class="login-error"></div>
+    <input id="pw-input" type="password" placeholder="Admin password" autofocus>
+    <button id="login-btn">Unlock</button>
+  </div>
+</div>
+
+<!-- DASHBOARD VIEW -->
+<div id="dash-view" class="container" style="display:none">
+  <div class="topbar">
+    <h1>📊 Admin Dashboard <span>DemoBook</span></h1>
+    <div class="topbar-actions">
+      <span style="font-size:12px;color:var(--muted)"><span class="live-dot"></span><span id="last-updated">Loading…</span></span>
+      <button class="btn" id="refresh-btn">🔄 Refresh</button>
+      <a class="btn" id="download-btn" href="#">⬇️ Download JSON</a>
+      <button class="btn" id="autorefresh-btn">⏸ Pause</button>
+      <a class="btn" href="/">← App</a>
+      <button class="btn danger" id="logout-btn">Logout</button>
+    </div>
+  </div>
+
+  <div class="warn">
+    ⚠️ <b>Free Render plan:</b> data resets on every restart. This page shows the current in-memory data. For permanent data, use MongoDB.
+  </div>
+
+  <div class="cards" id="stats-cards"></div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="users">👥 Users <span class="count" id="tab-count-users">0</span></button>
+    <button class="tab" data-tab="posts">📝 Posts <span class="count" id="tab-count-posts">0</span></button>
+    <button class="tab" data-tab="messages">💬 Messages <span class="count" id="tab-count-messages">0</span></button>
+    <button class="tab" data-tab="groups">👥 Groups <span class="count" id="tab-count-groups">0</span></button>
+  </div>
+
+  <div id="tab-panel"></div>
+
+  <div class="footer">
+    Data shown as JSON from <code>/api/admin/data</code> · Auto-refresh every 10s
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const API = '/api/admin/data';
+let currentData = null;
+let currentTab = 'users';
+let autoRefreshTimer = null;
+let autoRefreshOn = true;
+
+// ---------- helpers ----------
+const $ = s => document.querySelector(s);
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s == null ? '' : String(s);
+  return d.innerHTML;
+}
+function timeAgo(ts) {
+  if (!ts) return '—';
+  const s = Math.floor((Date.now() - ts) / 1000);
+  if (s < 60) return s + 's ago';
+  if (s < 3600) return Math.floor(s / 60) + 'm ago';
+  if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+  return Math.floor(s / 86400) + 'd ago';
+}
+function fmtDate(ts) {
+  if (!ts) return '—';
+  return new Date(ts).toLocaleString();
+}
+function toast(msg, kind = 'ok') {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.className = 'show ' + kind;
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.className = '', 2500);
+}
+
+// ---------- auth ----------
+function getPw() { return sessionStorage.getItem('admin_pw') || ''; }
+function setPw(p) { sessionStorage.setItem('admin_pw', p); }
+function clearPw() { sessionStorage.removeItem('admin_pw'); }
+
+async function checkLogin() {
+  const pw = getPw();
+  if (!pw) return showLogin();
+  try {
+    const res = await fetch(API + '?pw=' + encodeURIComponent(pw));
+    if (!res.ok) throw new Error('bad');
+    currentData = await res.json();
+    showDash();
+    render();
+    startAutoRefresh();
+  } catch {
+    clearPw();
+    showLogin();
+  }
+}
+
+function showLogin() {
+  $('#login-view').style.display = 'flex';
+  $('#dash-view').style.display = 'none';
+  stopAutoRefresh();
+  setTimeout(() => $('#pw-input').focus(), 50);
+}
+
+function showDash() {
+  $('#login-view').style.display = 'none';
+  $('#dash-view').style.display = 'block';
+}
+
+// ---------- login handlers ----------
+$('#login-btn').onclick = async () => {
+  const pw = $('#pw-input').value;
+  if (!pw) return;
+  $('#login-error').textContent = '';
+  try {
+    const res = await fetch(API + '?pw=' + encodeURIComponent(pw));
+    if (!res.ok) throw new Error('Invalid password');
+    currentData = await res.json();
+    setPw(pw);
+    showDash();
+    render();
+    startAutoRefresh();
+    toast('Logged in');
+  } catch (e) {
+    $('#login-error').textContent = '❌ Invalid password';
+    $('#pw-input').value = '';
+    $('#pw-input').focus();
+  }
+};
+$('#pw-input').addEventListener('keydown', e => { if (e.key === 'Enter') $('#login-btn').click(); });
+
+$('#logout-btn').onclick = () => {
+  clearPw();
+  currentData = null;
+  showLogin();
+  $('#pw-input').value = '';
+};
+
+// ---------- data loading ----------
+async function refresh() {
+  const pw = getPw();
+  if (!pw) return;
+  try {
+    const res = await fetch(API + '?pw=' + encodeURIComponent(pw));
+    if (!res.ok) throw new Error('Auth failed');
+    currentData = await res.json();
+    render();
+    $('#last-updated').textContent = 'Updated ' + timeAgo(currentData.exportedAt);
+  } catch (e) {
+    toast('Refresh failed: ' + e.message, 'err');
+    if (e.message === 'Auth failed') { clearPw(); showLogin(); }
+  }
+}
+
+function startAutoRefresh() {
+  stopAutoRefresh();
+  if (!autoRefreshOn) return;
+  autoRefreshTimer = setInterval(refresh, 10000);
+}
+function stopAutoRefresh() {
+  if (autoRefreshTimer) { clearInterval(autoRefreshTimer); autoRefreshTimer = null; }
+}
+
+$('#refresh-btn').onclick = () => { refresh(); toast('Refreshed'); };
+$('#autorefresh-btn').onclick = () => {
+  autoRefreshOn = !autoRefreshOn;
+  $('#autorefresh-btn').textContent = autoRefreshOn ? '⏸ Pause' : '▶ Resume';
+  if (autoRefreshOn) { startAutoRefresh(); toast('Auto-refresh on'); }
+  else { stopAutoRefresh(); toast('Auto-refresh paused'); }
+};
+$('#download-btn').onclick = () => {
+  const pw = getPw();
+  window.location.href = API + '?pw=' + encodeURIComponent(pw) + '&download=1';
+};
+
+// ---------- tabs ----------
+document.querySelectorAll('.tab').forEach(t => {
+  t.onclick = () => {
+    currentTab = t.dataset.tab;
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    renderPanel();
+  };
+});
+
+// ---------- render ----------
+function render() {
+  if (!currentData) return;
+  renderStats();
+  renderTabCounts();
+  renderPanel();
+  $('#last-updated').textContent = 'Updated ' + timeAgo(currentData.exportedAt);
+}
+
+function renderStats() {
+  const c = currentData.counts;
+  const items = [
+    { lbl: 'Users', num: c.users, cls: '' },
+    { lbl: 'Posts', num: c.posts, cls: 'green' },
+    { lbl: 'Direct Msgs', num: c.directMessages, cls: 'purple' },
+    { lbl: 'Groups', num: c.groups, cls: 'yellow' },
+    { lbl: 'Group Msgs', num: c.groupMessages, cls: '' },
+    { lbl: 'Stories', num: c.stories, cls: 'green' },
+    { lbl: 'Friendships', num: c.friendships, cls: 'purple' },
+    { lbl: 'Pending Req', num: c.pendingRequests, cls: 'yellow' }
+  ];
+  $('#stats-cards').innerHTML = items.map(i => `
+    <div class="card ${i.cls}">
+      <div class="num">${i.num}</div>
+      <div class="lbl">${i.lbl}</div>
+    </div>`).join('');
+}
+
+function renderTabCounts() {
+  $('#tab-count-users').textContent = currentData.users.length;
+  $('#tab-count-posts').textContent = currentData.posts.length;
+  $('#tab-count-messages').textContent = currentData.messages.length;
+  $('#tab-count-groups').textContent = currentData.groups.length;
+}
+
+function renderPanel() {
+  const p = $('#tab-panel');
+  if (currentTab === 'users') p.innerHTML = renderUsers();
+  else if (currentTab === 'posts') p.innerHTML = renderPosts();
+  else if (currentTab === 'messages') p.innerHTML = renderMessages();
+  else if (currentTab === 'groups') p.innerHTML = renderGroups();
+  if (currentTab === 'users') attachUserSearch();
+}
+
+function renderUsers() {
+  const list = currentData.users.slice().sort((a, b) => (b.lastActiveAt || 0) - (a.lastActiveAt || 0));
+  if (!list.length) return '<div class="table-wrap"><div class="empty">No users yet.</div></div>';
+  return `
+    <div class="search-row">
+      <input id="user-search" type="text" placeholder="Search users by username or name…">
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>ID</th><th>User</th><th>Bio</th><th>Password hash</th>
+          <th>Posts</th><th>Friends</th><th>Msgs</th><th>Last active</th>
+        </tr></thead>
+        <tbody id="user-tbody">
+          ${list.map(u => userRow(u)).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function userRow(u) {
+  return `<tr data-search="${esc((u.username + ' ' + u.name).toLowerCase())}">
+    <td><span class="pill muted">#${u.id}</span></td>
+    <td>
+      <div class="avatar-cell">
+        <div class="avatar" style="background:${u.avatarColor}">${esc(u.name.charAt(0).toUpperCase())}</div>
+        <div>
+          <div><b>${esc(u.name)}</b></div>
+          <div class="muted">@${esc(u.username)}</div>
+        </div>
+      </div>
+    </td>
+    <td class="muted">${esc((u.bio || '').slice(0, 60)) || '—'}</td>
+    <td><code>${esc(u.passwordHashPreview)}</code></td>
+    <td>${u.postCount}</td>
+    <td>${u.friendCount}</td>
+    <td>${u.messagesSent}</td>
+    <td class="muted">${u.lastActiveAt ? timeAgo(u.lastActiveAt) : '—'}</td>
+  </tr>`;
+}
+
+function attachUserSearch() {
+  const inp = $('#user-search');
+  if (!inp) return;
+  inp.oninput = () => {
+    const q = inp.value.trim().toLowerCase();
+    document.querySelectorAll('#user-tbody tr').forEach(tr => {
+      tr.style.display = !q || tr.dataset.search.includes(q) ? '' : 'none';
+    });
+  };
+}
+
+function renderPosts() {
+  const list = currentData.posts;
+  if (!list.length) return '<div class="table-wrap"><div class="empty">No posts yet.</div></div>';
+  return `<div class="table-wrap"><table>
+    <thead><tr>
+      <th>ID</th><th>Author</th><th>Content</th><th>Media</th>
+      <th>Likes</th><th>Comments</th><th>When</th>
+    </tr></thead>
+    <tbody>${list.map(p => `
+      <tr>
+        <td><span class="pill muted">#${p.id}</span></td>
+        <td><b>@${esc(p.author)}</b><div class="muted">${esc(p.authorName)}</div></td>
+        <td>${esc(p.content.slice(0, 140))}${p.content.length > 140 ? '…' : ''}</td>
+        <td>${p.hasImage ? '<span class="pill blue">🖼</span>' : '<span class="muted">—</span>'}</td>
+        <td>${p.likes}</td>
+        <td>${p.comments}</td>
+        <td class="muted">${timeAgo(p.createdAt)}</td>
+      </tr>`).join('')}
+    </tbody></table></div>`;
+}
+
+function renderMessages() {
+  const list = currentData.messages;
+  if (!list.length) return '<div class="table-wrap"><div class="empty">No messages yet.</div></div>';
+  return `<div class="table-wrap"><table>
+    <thead><tr>
+      <th>ID</th><th>From</th><th>To</th><th>Message</th><th>Read</th><th>When</th>
+    </tr></thead>
+    <tbody>${list.map(m => `
+      <tr>
+        <td><span class="pill muted">#${m.id}</span></td>
+        <td><b>@${esc(m.from)}</b></td>
+        <td><b>@${esc(m.to)}</b></td>
+        <td>${esc(m.content.slice(0, 120))}${m.content.length > 120 ? '…' : ''}</td>
+        <td>${m.read ? '<span class="pill green">✓</span>' : '<span class="pill muted">—</span>'}</td>
+        <td class="muted">${timeAgo(m.createdAt)}</td>
+      </tr>`).join('')}
+    </tbody></table></div>`;
+}
+
+function renderGroups() {
+  const list = currentData.groups;
+  if (!list.length) return '<div class="table-wrap"><div class="empty">No groups yet.</div></div>';
+  return `<div class="table-wrap"><table>
+    <thead><tr>
+      <th>ID</th><th>Group</th><th>Members</th><th>Messages</th><th>Created</th>
+    </tr></thead>
+    <tbody>${list.map(g => `
+      <tr>
+        <td><span class="pill muted">#${g.id}</span></td>
+        <td><b>${esc(g.name)}</b></td>
+        <td>${g.memberCount}</td>
+        <td>${g.messageCount}</td>
+        <td class="muted">${timeAgo(g.createdAt)}</td>
+      </tr>`).join('')}
+    </tbody></table></div>`;
+}
+
+// ---------- boot ----------
+checkLogin();
+</script>
+</body>
+</html>
